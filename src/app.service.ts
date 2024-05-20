@@ -1,21 +1,32 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import CreateAuthenticationDto from './dto/register-device.dto';
-import { server } from '@passwordless-id/webauthn';
+import { Injectable } from '@nestjs/common';
+import {
+  generateRegistrationOptions,
+  GenerateRegistrationOptionsOpts,
+} from '@simplewebauthn/server';
+import GenerateRegisterOptionDto from './dto/generate-register-option.dto';
 
 @Injectable()
 export default class AppService {
-  private readonly challenge = 'a7c61ef9-dc23-4806-b486-2428938a547e';
+  private rpName = 'Milio';
+  private rpID = 'https://milio.com.co/';
 
-  private serverAuth = server;
-
-  public registerDevice = async (dto: CreateAuthenticationDto) => {
-    try {
-      return await this.serverAuth.verifyRegistration(dto, {
-        challenge: this.challenge,
-        origin: 'http://localhost:4200',
-      });
-    } catch (error: any) {
-      throw new InternalServerErrorException(error);
-    }
+  public generateRegisterOptions = async ({
+    userName,
+    userDisplayName,
+  }: GenerateRegisterOptionDto) => {
+    const opts: GenerateRegistrationOptionsOpts = {
+      rpName: this.rpName,
+      rpID: this.rpID,
+      userName,
+      userDisplayName,
+      timeout: 60000,
+      attestationType: 'none',
+      authenticatorSelection: {
+        residentKey: 'discouraged',
+        userVerification: 'preferred',
+      },
+      supportedAlgorithmIDs: [-7, -257],
+    };
+    return await generateRegistrationOptions(opts);
   };
 }

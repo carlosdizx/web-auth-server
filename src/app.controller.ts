@@ -1,13 +1,13 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import AppService from './app.service';
-import CreateAuthenticationDto from './dto/register-device.dto';
+import GenerateRegisterOptionDto from './dto/generate-register-option.dto';
 
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Post('register-device')
-  async registerDevice(@Body() dto: CreateAuthenticationDto) {
-    return await this.appService.registerDevice(dto);
+  @Post('generate-register-options')
+  public async registerDevice(@Body() dto: GenerateRegisterOptionDto) {
+    return await this.appService.generateRegisterOptions(dto);
   }
 }
