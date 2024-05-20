@@ -15,20 +15,7 @@
     "strictNullChecks": false,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "types": ["node", "express"],
-    "esModuleInterop": true,
-    "strict": true,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noImplicitReturns": true,
-    "moduleResolution": "node",
-    "importHelpers": true,
-    "useDefineForClassFields": false,
-    "lib": ["ES2022", "dom"]
-  },
-  "include": ["src/**/*"],
-  "compileOnSave": false,
-
+    "forceConsistentCasingInFileNames": false,
+    "noFallthroughCasesInSwitch": false
+  }
 }
