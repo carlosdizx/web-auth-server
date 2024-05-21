@@ -8,6 +8,11 @@ import VerifyAuthenticationDto from './dto/verify-authentication.dto';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
+  @Get()
+  public async findAllDevices() {
+    return this.appService.findAllDevicesRegisters();
+  }
+
   @Post('generate-register-options')
   public async generateRegisterOptions(@Body() dto: GenerateRegisterOptionDto) {
     return await this.appService.generateRegisterOptions(dto);

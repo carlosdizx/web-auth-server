@@ -32,6 +32,8 @@ export default class AppService {
 
   private readonly devices: AuthenticatorDevice[] = [];
 
+  public findAllDevicesRegisters = () => this.devices;
+
   public generateRegisterOptions = async ({
     userName,
     userDisplayName,
