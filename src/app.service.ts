@@ -4,17 +4,21 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import {
+  generateAuthenticationOptions,
+  GenerateAuthenticationOptionsOpts,
   generateRegistrationOptions,
   GenerateRegistrationOptionsOpts,
   VerifiedRegistrationResponse,
+  verifyAuthenticationResponse,
+  VerifyAuthenticationResponseOpts,
   verifyRegistrationResponse,
   VerifyRegistrationResponseOpts,
-  generateAuthenticationOptions,
-  GenerateAuthenticationOptionsOpts,
 } from '@simplewebauthn/server';
 import GenerateRegisterOptionDto from './dto/generate-register-option.dto';
-import type { RegistrationResponseJSON } from '@simplewebauthn/types';
 import VerifyRegisterDto from './dto/verify-register.dto';
+import VerifyAuthenticationDto from './dto/verify-authentication.dto';
+import { VerifiedAuthenticationResponse } from '@simplewebauthn/server/esm/authentication/verifyAuthenticationResponse';
+import type { AuthenticatorDevice } from '@simplewebauthn/types';
 
 @Injectable()
 export default class AppService {
@@ -25,6 +29,8 @@ export default class AppService {
   private readonly rpName = 'Milio';
 
   private readonly rpID = 'localhost';
+
+  private readonly devices: AuthenticatorDevice[] = [];
 
   public generateRegisterOptions = async ({
     userName,
@@ -53,12 +59,10 @@ export default class AppService {
   };
 
   public verifyUserRegistration = async (dto: VerifyRegisterDto) => {
-    const responseJSON: RegistrationResponseJSON = dto as any;
-
     const [expectedChallenge] = btoa(this.challenge).split('==');
 
     const opts: VerifyRegistrationResponseOpts = {
-      response: responseJSON,
+      response: dto as any,
       expectedChallenge,
       expectedOrigin: this.origin,
       expectedRPID: this.rpID,
@@ -71,9 +75,21 @@ export default class AppService {
     } catch (error) {
       throw new ConflictException('Could not verify registration');
     }
-    const { verified } = verification;
-    if (verified) return { message: 'User register' };
-    throw new ConflictException('Error user not verified');
+    const { verified, registrationInfo } = verification;
+    if (!verified || !registrationInfo)
+      throw new ConflictException('Error user not register');
+
+    const { credentialPublicKey, credentialID, counter } = registrationInfo;
+
+    const device: AuthenticatorDevice = {
+      credentialPublicKey,
+      credentialID,
+      counter,
+      transports: dto.response.transports as any,
+    };
+    this.devices.push(device);
+
+    return { message: 'User register', ...registrationInfo };
   };
 
   public generateAuthenticationOptions = async () => {
@@ -91,5 +107,31 @@ export default class AppService {
         'ERROR generating options for registration',
       );
     }
+  };
+
+  public verifyAuthentication = async (dto: VerifyAuthenticationDto) => {
+    const [expectedChallenge] = btoa(this.challenge).split('==');
+
+    const device: AuthenticatorDevice = {} as any;
+    const opts: VerifyAuthenticationResponseOpts = {
+      authenticator: device,
+      response: dto as any,
+      expectedChallenge: `${expectedChallenge}`,
+      expectedOrigin: this.origin,
+      expectedRPID: this.rpID,
+    };
+
+    let verification: VerifiedAuthenticationResponse;
+    try {
+      verification = await verifyAuthenticationResponse(opts);
+    } catch (error) {
+      console.log();
+      throw new InternalServerErrorException('ERROR in verification user');
+    }
+
+    const { verified } = verification;
+
+    if (verified) return { message: 'User authenticated' };
+    throw new ConflictException('Error user not authenticated');
   };
 }

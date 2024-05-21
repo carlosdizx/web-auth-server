@@ -2,6 +2,7 @@ import { Body, Controller, Get, Post } from '@nestjs/common';
 import AppService from './app.service';
 import GenerateRegisterOptionDto from './dto/generate-register-option.dto';
 import VerifyRegisterDto from './dto/verify-register.dto';
+import VerifyAuthenticationDto from './dto/verify-authentication.dto';
 
 @Controller()
 export class AppController {
@@ -20,5 +21,10 @@ export class AppController {
   @Get('generate-authentication-options')
   public async generateAuthenticationOptions() {
     return this.appService.generateAuthenticationOptions();
+  }
+
+  @Post('verify-authentication-options')
+  public async authenticateDevice(@Body() dto: VerifyAuthenticationDto) {
+    return this.appService.verifyAuthentication(dto);
   }
 }
