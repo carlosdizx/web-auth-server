@@ -1,10 +1,16 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import {
   generateRegistrationOptions,
   GenerateRegistrationOptionsOpts,
   VerifiedRegistrationResponse,
   verifyRegistrationResponse,
   VerifyRegistrationResponseOpts,
+  generateAuthenticationOptions,
+  GenerateAuthenticationOptionsOpts,
 } from '@simplewebauthn/server';
 import GenerateRegisterOptionDto from './dto/generate-register-option.dto';
 import type { RegistrationResponseJSON } from '@simplewebauthn/types';
@@ -37,7 +43,13 @@ export default class AppService {
       },
       supportedAlgorithmIDs: [-7, -257],
     };
-    return await generateRegistrationOptions(opts);
+    try {
+      return await generateRegistrationOptions(opts);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'ERROR generating options for registration',
+      );
+    }
   };
 
   public verifyUserRegistration = async (dto: VerifyRegisterDto) => {
@@ -57,11 +69,27 @@ export default class AppService {
     try {
       verification = await verifyRegistrationResponse(opts);
     } catch (error) {
-      console.error(error);
       throw new ConflictException('Could not verify registration');
     }
     const { verified } = verification;
     if (verified) return { message: 'User register' };
     throw new ConflictException('Error user not verified');
+  };
+
+  public generateAuthenticationOptions = async () => {
+    const opts: GenerateAuthenticationOptionsOpts = {
+      timeout: 60000,
+      userVerification: 'preferred',
+      rpID: this.rpID,
+      challenge: this.challenge,
+    };
+
+    try {
+      return await generateAuthenticationOptions(opts);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'ERROR generating options for registration',
+      );
+    }
   };
 }
