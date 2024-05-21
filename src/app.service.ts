@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import {
   generateAuthenticationOptions,
@@ -114,7 +115,11 @@ export default class AppService {
   public verifyAuthentication = async (dto: VerifyAuthenticationDto) => {
     const [expectedChallenge] = btoa(this.challenge).split('==');
 
-    const device: AuthenticatorDevice = {} as any;
+    const device: AuthenticatorDevice = this.devices.find(
+      ({ credentialID }) => credentialID === dto.id,
+    );
+
+    if (!device) throw new NotFoundException('Device not found');
     const opts: VerifyAuthenticationResponseOpts = {
       authenticator: device,
       response: dto as any,
@@ -127,7 +132,7 @@ export default class AppService {
     try {
       verification = await verifyAuthenticationResponse(opts);
     } catch (error) {
-      console.log();
+      console.log(error);
       throw new InternalServerErrorException('ERROR in verification user');
     }
 
